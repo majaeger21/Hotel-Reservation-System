@@ -12,4 +12,4 @@
 2. Install required packages:
     pip install -r requirements.txt
 3. Run code:
-    python src/lab7.p7
+    python src/main.py
