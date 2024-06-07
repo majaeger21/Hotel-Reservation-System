@@ -5,7 +5,6 @@
 - Member 2: [Ryan ]
 
 ## Compilation/Runtime Instructions
-
 1. Set up a virtual environment:
    ```bash
    python3 -m venv venv
@@ -13,4 +12,4 @@
 2. Install required packages:
     pip install -r requirements.txt
 3. Run code:
-    python lab7.p7
+    python src/lab7.p7
