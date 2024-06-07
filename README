@@ -1,0 +1,16 @@
+# Inn/Hotel Reservation System
+
+## Team Members
+- Member 1: [Meyli Jaeger]
+- Member 2: [Ryan ]
+
+## Compilation/Runtime Instructions
+
+1. Set up a virtual environment:
+   ```bash
+   python3 -m venv venv
+   source venv/bin/activate   # On Windows: venv\Scripts\activate
+2. Install required packages:
+    pip install -r requirements.txt
+3. Run code:
+    python lab7.p7
