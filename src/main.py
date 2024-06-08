@@ -329,9 +329,20 @@ def d_r_i():
 
         # Query to find available rooms based on user input
         query = f"""
-        SELECT *
+        SELECT 
+            CODE,
+            Room,
+            CheckIn,
+            Checkout,
+            Rate,
+            LastName,
+            Firstname,
+            Adults,
+            Kids,
+            RoomName
         FROM
              lab7_reservations
+        INNER JOIN lab7_rooms ON Room = RoomCode
         WHERE
             (FirstName LIKE '{first_name}' OR '{first_name}' = '')
             AND (LastName LIKE '{last_name}' OR '{last_name}' = '')
@@ -344,10 +355,10 @@ def d_r_i():
         reservations = cursor.fetchall()
 
         if reservations:
-            print(f"{'CODE':<12}{'Room':<6}{'CheckIn':<11}{'CheckOut':<11}{'Rate':<9}{'LastName':<16}{'FirstName':<16}{'Adults':<12}{'Kids':<12}")
-            print("="*120)
+            print(f"{'CODE':<12}{'Room':<6}{'CheckIn':<12}{'CheckOut':<12}{'Rate':<9}{'LastName':<16}{'FirstName':<16}{'Adults':<12}{'Kids':<12}{'RoomName':<31}")
+            print("="*138)
             for reservation in reservations:
-                print(f"{reservation[0]:<12}{reservation[1]:<6}{reservation[2]:<11}{reservation[3]:<11}{reservation[4]:<9}{reservation[5]:<16}{reservation[6]:<16}{reservation[7]:<12}{reservation[8]:<12}")
+                print(f"{reservation[0]:<12}{reservation[1]:<6}{begin_date:<12}{end_date:<12}{reservation[4]:<9}{reservation[5]:<16}{reservation[6]:<16}{reservation[7]:<12}{reservation[8]:<12}{reservation[9]:<31}")
         else:
             print("Reservation not found.")
 
