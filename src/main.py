@@ -425,10 +425,10 @@ def revenue():
             print("="*137)
             for room, revenue in monthly_revenue.items():
                 total_revenue = sum(revenue[month] for month in range(1, 13))
-                print(f"{room:<6}", end="")
+                print(f"{room:<5}", end="")
                 for month in range(1, 13):
-                    print(f"{revenue[month]:^10.2f}", end="")
-                print(f"{total_revenue:10.2f}")
+                    print(f"{revenue[month]:^10.0f}", end="")
+                print(f"{total_revenue:^11.0f}")
 
         else:
             print("No Reservations made this year.")
