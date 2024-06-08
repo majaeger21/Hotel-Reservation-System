@@ -157,7 +157,7 @@ def make_reservation():
 
     if not rooms:
         # Suggest alternative rooms if no exact match is found
-        print("No exact matches found. Suggesting alternatives...")
+        print("No exact matches found. Suggesting 5 alternatives...")
         alternative_query = f"""
         WITH InputParameters AS (
             SELECT
@@ -236,10 +236,11 @@ def make_reservation():
         print(f"End date of stay: {end_date}")
         print(f"Number of adults: {num_adults}")
         print(f"Number of children: {num_children}")
-        print(f"Total cost of stay: ${total_cost}")
+        print(f"Total cost of stay: ${total_cost} \n ")
 
     cursor.close()
     conn.close()
+
 
 
 def main():
