@@ -1,7 +1,7 @@
 import db
-from datetime import date
+from datetime import date, datetime, timedelta
 import sqlite3
-import datetime
+
 
 def list_rooms():
     conn = db.get_db_connection()
@@ -64,6 +64,21 @@ def list_rooms():
 
     cursor.close()
     conn.close()
+
+def calculate_total_cost(begin_date, end_date, base_rate):
+    begin_date = datetime.strptime(begin_date, "%Y-%m-%d")
+    end_date = datetime.strptime(end_date, "%Y-%m-%d")
+    total_cost = 0.0
+    current_date = begin_date
+
+    while current_date < end_date:
+        if current_date.weekday() < 5:  # Weekday
+            total_cost += base_rate
+        else:  # Weekend
+            total_cost += base_rate * 1.1
+        current_date += timedelta(days=1)
+
+    return round(total_cost, 2)
 
 def make_reservation():
     conn = sqlite3.connect('inn.db')
@@ -193,17 +208,35 @@ def make_reservation():
         print(f"{room[0]:<5}{room[1]:<10}{room[2]:<30}{room[3]:<5}{room[4]:<10}{room[5]:<7}{room[6]:<10}{room[7]}")
 
     if rooms:
-        choice = int(input("Enter the number of the room you want to book: "))
-        selected_room = rooms[choice - 1]
+        choice = input("Enter the number of the room you want to book or 'cancel' to return to the main menu: ")
+        if choice.lower() == 'cancel':
+            return
+
+        selected_room = rooms[int(choice) - 1]
+
+        # Calculate the total cost of the stay
+        total_cost = calculate_total_cost(begin_date, end_date, selected_room[6])
 
         # Insert the reservation into the database
         cursor.execute(f"""
         INSERT INTO lab7_reservations (Room, CheckIn, Checkout, Rate, LastName, FirstName, Adults, Kids)
-        VALUES ('{selected_room[1]}', '{begin_date}', '{end_date}', (SELECT basePrice FROM lab7_rooms WHERE RoomCode = '{selected_room[1]}'), '{last_name}', '{first_name}', {num_adults}, {num_children})
+        VALUES ('{selected_room[1]}', '{begin_date}', '{end_date}', {total_cost}, '{last_name}', '{first_name}', {num_adults}, {num_children})
         """)
 
         conn.commit()
-        print(f"Reservation made successfully for room {selected_room[1]}.")
+
+        # Confirmation screen
+        print("\nReservation Confirmation:")
+        print(f"First name: {first_name}")
+        print(f"Last name: {last_name}")
+        print(f"Room code: {selected_room[1]}")
+        print(f"Room name: {selected_room[2]}")
+        print(f"Bed type: {selected_room[4]}")
+        print(f"Begin date of stay: {begin_date}")
+        print(f"End date of stay: {end_date}")
+        print(f"Number of adults: {num_adults}")
+        print(f"Number of children: {num_children}")
+        print(f"Total cost of stay: ${total_cost}")
 
     cursor.close()
     conn.close()
