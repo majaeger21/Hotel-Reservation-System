@@ -241,7 +241,46 @@ def make_reservation():
     cursor.close()
     conn.close()
 
+def d_r_i(): 
+    conn = sqlite3.connect('inn.db')
+    cursor = conn.cursor()
 
+    first_name = input("Enter first name: ")
+    last_name = input("Enter last name: ")
+    reservation_code = input("Enter reservation code: ")
+    room_code = input("Enter room code: ")
+    begin_date = input("Enter begin date of stay (YYYY-MM-DD): ")
+    end_date = input("Enter end date of stay (YYYY-MM-DD): ")
+
+    
+    
+    # Query to find available rooms based on user input
+    query = f"""
+    SELECT *
+    FROM
+         lab7_reservations
+    WHERE
+        (FirstName LIKE '{first_name}' OR '{first_name}' = '')
+        AND (LastName LIKE '{last_name}' OR '{last_name}' = '')
+        AND (CODE LIKE '{reservation_code}' OR '{reservation_code}' = '')
+        AND (Room LIKE '{room_code}' OR '{room_code}' = '')
+        AND CheckIn = '{begin_date}'
+        AND CheckOut = '{end_date}'
+   
+    """
+    cursor.execute(query)
+    reservations = cursor.fetchall()
+
+    if reservations:
+        print(f"{'CODE':<12}{'Room':<6}{'CheckIn':<11}{'CheckOut':<11}{'Rate':<9}{'LastName':<16}{'FirstName':<16}{'Adults':<12}{'Kids':<12}")
+        print("="*90)
+        for reservation in reservations:
+            print(f"{reservation[0]:<12}{reservation[1]:<6}{reservation[2]:<11}{reservation[3]:<11}{reservation[4]:<9}{reservation[5]:<16}{reservation[6]:<16}{reservation[7]:<12}{reservation[8]:<12}")
+    else:
+        print("Reservation not found.")
+
+    cursor.close()
+    conn.close()
 
 def main():
     while True:
@@ -262,7 +301,7 @@ def main():
         elif choice == '3':
             pass
         elif choice == '4':
-            pass
+            d_r_i()
         elif choice == '5':
             pass
         else:
