@@ -78,7 +78,136 @@ def make_reservation():
     num_children = int(input("Enter number of children: "))
     num_adults = int(input("Enter number of adults: "))
 
-    
+    total_guests = num_children + num_adults
+
+    # Check if the requested person count exceeds the maximum capacity of any room
+    cursor.execute("SELECT MAX(maxOcc) FROM lab7_rooms")
+    max_capacity = cursor.fetchone()[0]
+    if total_guests > max_capacity:
+        print("No suitable rooms are available for the requested number of guests.")
+        return
+
+    # Query to find available rooms based on user input
+    query = f"""
+    WITH InputParameters AS (
+        SELECT
+            '{begin_date}' AS user_checkin,
+            '{end_date}' AS user_checkout,
+            '{bed_type}' AS user_bedtype,
+            {total_guests} AS user_max_occ,
+            {num_adults} AS user_adults,
+            {num_children} AS user_children
+    ),
+    AvailableRooms AS (
+        SELECT
+            r.RoomCode,
+            r.RoomName,
+            r.Beds,
+            r.bedType,
+            r.maxOcc,
+            r.basePrice,
+            r.decor
+        FROM
+            lab7_rooms r
+        LEFT JOIN
+            lab7_reservations res
+        ON
+            r.RoomCode = res.Room
+        AND (
+            (res.CheckIn <= (SELECT user_checkin FROM InputParameters) AND res.Checkout > (SELECT user_checkin FROM InputParameters)) OR
+            (res.CheckIn < (SELECT user_checkout FROM InputParameters) AND res.Checkout >= (SELECT user_checkout FROM InputParameters)) OR
+            (res.CheckIn >= (SELECT user_checkin FROM InputParameters) AND res.Checkout <= (SELECT user_checkout FROM InputParameters))
+        )
+        WHERE
+            res.Room IS NULL
+            AND (r.RoomCode = '{room_code}' OR '{room_code}' = 'Any')
+            AND (r.bedType = (SELECT user_bedtype FROM InputParameters) OR '{bed_type}' = 'Any')
+            AND r.maxOcc >= (SELECT user_max_occ FROM InputParameters)
+    )
+    SELECT
+        ROW_NUMBER() OVER (ORDER BY RoomCode) AS RoomNumber,
+        RoomCode,
+        RoomName,
+        Beds,
+        bedType,
+        maxOcc,
+        basePrice,
+        decor
+    FROM
+        AvailableRooms;
+    """
+
+    cursor.execute(query)
+    rooms = cursor.fetchall()
+
+    if not rooms:
+        # Suggest alternative rooms if no exact match is found
+        print("No exact matches found. Suggesting alternatives...")
+        alternative_query = f"""
+        WITH InputParameters AS (
+            SELECT
+                '{begin_date}' AS user_checkin,
+                '{end_date}' AS user_checkout,
+                '{bed_type}' AS user_bedtype,
+                {total_guests} AS user_max_occ,
+                {num_adults} AS user_adults,
+                {num_children} AS user_children
+        ),
+        AlternativeRooms AS (
+            SELECT
+                r.RoomCode,
+                r.RoomName,
+                r.Beds,
+                r.bedType,
+                r.maxOcc,
+                r.basePrice,
+                r.decor,
+                LEAST(ABS(r.maxOcc - (SELECT user_max_occ FROM InputParameters)), ABS(r.Beds - (SELECT user_max_occ FROM InputParameters))) AS similarity
+            FROM
+                lab7_rooms r
+            WHERE
+                r.maxOcc >= (SELECT user_max_occ FROM InputParameters)
+            ORDER BY
+                similarity ASC
+            LIMIT 5
+        )
+        SELECT
+            ROW_NUMBER() OVER (ORDER BY RoomCode) AS RoomNumber,
+            RoomCode,
+            RoomName,
+            Beds,
+            bedType,
+            maxOcc,
+            basePrice,
+            decor
+        FROM
+            AlternativeRooms;
+        """
+
+        cursor.execute(alternative_query)
+        rooms = cursor.fetchall()
+
+    print(f"{'No':<5}{'RoomCode':<10}{'RoomName':<30}{'Beds':<5}{'BedType':<10}{'MaxOcc':<7}{'BasePrice':<10}{'Decor'}")
+    print("="*90)
+    for room in rooms:
+        print(f"{room[0]:<5}{room[1]:<10}{room[2]:<30}{room[3]:<5}{room[4]:<10}{room[5]:<7}{room[6]:<10}{room[7]}")
+
+    if rooms:
+        choice = int(input("Enter the number of the room you want to book: "))
+        selected_room = rooms[choice - 1]
+
+        # Insert the reservation into the database
+        cursor.execute(f"""
+        INSERT INTO lab7_reservations (Room, CheckIn, Checkout, Rate, LastName, FirstName, Adults, Kids)
+        VALUES ('{selected_room[1]}', '{begin_date}', '{end_date}', (SELECT basePrice FROM lab7_rooms WHERE RoomCode = '{selected_room[1]}'), '{last_name}', '{first_name}', {num_adults}, {num_children})
+        """)
+
+        conn.commit()
+        print(f"Reservation made successfully for room {selected_room[1]}.")
+
+    cursor.close()
+    conn.close()
+
 
 def main():
     while True:
