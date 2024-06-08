@@ -369,6 +369,77 @@ def d_r_i():
     except Exception as e:
         print(f"Unexpected error: {e}")
 
+def revenue(): 
+    try:
+        conn = db.get_db_connection()
+        if conn is None:
+            print("Failed to connect to the database.")
+            return
+        cursor = conn.cursor()
+
+        # Query to find available rooms based on user input
+        query = f"""
+        SELECT 
+            Room,
+            CheckIn,
+            Checkout,
+            Rate
+        FROM
+             lab7_reservations
+        WHERE YEAR(CheckIn) = YEAR(CURDATE())
+        ORDER BY Room
+        """
+        cursor.execute(query)
+        reservations = cursor.fetchall()
+        if reservations:
+            monthly_revenue = {}
+
+            # Generate a list of months for the current year
+            current_year = datetime.now().year
+            months = [(current_year, month) for month in range(1, 13)]
+
+            # Initialize the revenue dictionary for each room and each month
+            for room in set(reservation[0] for reservation in reservations):
+                monthly_revenue[room] = {month: 0 for _, month in months}
+
+            # Function to generate dates between two dates
+            def daterange(start_date, end_date):
+                for n in range(int((end_date - start_date).days)):
+                    yield start_date + timedelta(n)
+
+            # Process each reservation
+            for reservation in reservations:
+                room = reservation[0]
+                checkin = reservation[1]
+                checkout = reservation[2]
+                rate = reservation[3]
+                
+                # Generate daily revenue
+                for single_date in daterange(checkin, checkout):
+                    year_month = (single_date.year, single_date.month)
+                    if single_date.year == current_year:
+                        monthly_revenue[room][year_month[1]] += rate
+
+            # Print the results
+            print(f"{'CODE':<8}{'January':<10}{'February':<10}{'March':<10}{'April':<10}{'May':<10}{'June':<10}{'July':<10}{'August':<10}{'September':<10}{'October':<10}{'November':<10}{'December':<10}{'Total':<10}")
+            print("="*137)
+            for room, revenue in monthly_revenue.items():
+                total_revenue = sum(revenue[month] for month in range(1, 13))
+                print(f"{room:<6}", end="")
+                for month in range(1, 13):
+                    print(f"{revenue[month]:^10.2f}", end="")
+                print(f"{total_revenue:10.2f}")
+
+        else:
+            print("No Reservations made this year.")
+
+        cursor.close()
+        conn.close()
+    except mysql.connector.Error as err:
+        print(f"Error: {err}")
+    except Exception as e:
+        print(f"Unexpected error: {e}")       
+
 
 def main():
     while True:
@@ -391,7 +462,7 @@ def main():
         elif choice == '4':
             d_r_i() 
         elif choice == '5':
-            pass  # Add your revenue view logic here
+            revenue()  # Add your revenue view logic here
         else:
             print("Invalid choice. Please try again.")
 
