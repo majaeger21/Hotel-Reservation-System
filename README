@@ -10,6 +10,7 @@
    python3 -m venv venv
    source venv/bin/activate   # On Windows: venv\Scripts\activate
 2. Install required packages:
+    pip install python-dotenv 
     pip install -r requirements.txt
 3. Run code:
     python src/main.py
